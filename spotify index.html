@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWIFT UB - Sangønsker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+        }
+
+        form {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        form label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        form input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        #suggestions {
+            list-style-type: none;
+            padding: 0;
+            margin-top: -10px;
+            background: #2a2a2a;
+            border-radius: 5px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        #suggestions li {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        #suggestions li:hover {
+            background: #444;
+        }
+
+        form button {
+            width: 100%;
+            padding: 10px;
+            background-color: #f39c12;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        form button:hover {
+            background-color: #d35400;
+        }
+
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>SWIFT UB</h1>
+        <p>Legg inn ditt sangønske til DJ-en!</p>
+    </header>
+
+    <form action="/send-request" method="POST">
+        <label for="song">Sangnavn:</label>
+        <input type="text" id="song" name="song" placeholder="F.eks. Shape of You" required onkeyup="searchSong(this.value)">
+        <ul id="suggestions"></ul>
+
+        <label for="artist">Artistnavn:</label>
+        <input type="text" id="artist" name="artist" placeholder="F.eks. Ed Sheeran" required>
+
+        <button type="submit">Send ønske</button>
+    </form>
+
+    <footer>
+        <p>SWIFT UB © 2025 | Din musikk, dine ønsker</p>
+    </footer>
+
+    <script>
+    const clientId = "860f7ff53bef4ff5ad7be883f4a28dd2";
+    const clientSecret = "a513e9ab150146fabc66b3456967fee7";
+    const redirectUri = "https://swiftub.github.io/SwiftUBWebsite/";
+
+    async function getToken() {
+        const response = await fetch("https://accounts.spotify.com/api/token", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Authorization": "Basic " + btoa(clientId + ":" + clientSecret)
+            },
+            body: "grant_type=client_credentials"
+        });
+        const data = await response.json();
+        return data.access_token;
+    }
+
+    async function searchSong(query) {
+        if (query.length < 2) return;
+        const token = await getToken();
+        const response = await fetch(`https://api.spotify.com/v1/search?q=${query}&type=track&limit=5`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await response.json();
+        const suggestions = document.getElementById("suggestions");
+        suggestions.innerHTML = "";
+
+        data.tracks.items.forEach(track => {
+            let li = document.createElement("li");
+            li.textContent = `${track.name} - ${track.artists[0].name}`;
+            li.onclick = () => document.getElementById("song").value = track.name;
+            suggestions.appendChild(li);
+        });
+    }
+    </script>
+</body>
+</html>
